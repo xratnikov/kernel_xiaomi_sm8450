@@ -1,4 +1,4 @@
-name: Build Kernel
+name: Build NetHunter Kernel (POCO F5)
 
 on:
   workflow_dispatch:
@@ -8,50 +8,52 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - name: Checkout Kernel
+    - name: Checkout Source
       uses: actions/checkout@v4
       with:
         fetch-depth: 1
         path: kernel/msm-5.10
 
-    - name: Install Packages
+    - name: Install Build Packages
       run: |
         sudo apt-get update
         sudo apt-get install -y bc bison build-essential curl flex git libssl-dev \
           libelf-dev python3 python-is-python3 libncurses-dev cpio lz4 \
           device-tree-compiler zip kmod pahole rsync
 
-    - name: Download Toolchain
+    - name: Download Toolchain and Tools
+      env:
+        DOM: "https://googlesource.com"
+        CLANG_PATH: "platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master-kernel-build-2021/clang-r416183b.tar.gz"
+        TOOLS_PATH: "kernel/prebuilts/build-tools/+archive/refs/heads/master-kernel-build-2021/linux-x86.tar.gz"
       run: |
         mkdir -p prebuilts-master/clang/host/linux-x86/clang-r416183b
         mkdir -p prebuilts/kernel-build-tools/linux-x86
+        
+        curl -fL "${{ env.DOM }}/${{ env.CLANG_PATH }}" | tar -xz -C prebuilts-master/clang/host/linux-x86/clang-r416183b
+        curl -fL "${{ env.DOM }}/${{ env.TOOLS_PATH }}" | tar -xz -C prebuilts/kernel-build-tools/linux-x86
 
-        DOM1="https://android."
-        DOM2="googlesource.com"
-        curl -fL "${DOM1}${DOM2}/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master-kernel-build-2021/clang-r416183b.tar.gz" | tar -xz -C prebuilts-master/clang/host/linux-x86/clang-r416183b
-        curl -fL "${DOM1}${DOM2}/kernel/prebuilts/build-tools/+archive/refs/heads/master-kernel-build-2021/linux-x86.tar.gz" | tar -xz -C prebuilts/kernel-build-tools/linux-x86
-
-    - name: Run build.sh
+    - name: Compile NetHunter Kernel
+      env:
+        KCFLAGS: "-w"
       run: |
         cd kernel/msm-5.10
         chmod +x build.sh
-        
-        find arch/arm64/configs/ -type f -exec sed -i 's/CONFIG_FRAME_WARN=[0-9]*/CONFIG_FRAME_WARN=0/g' {} +
-        if [ -f lib/lz4/Makefile ]; then
-          sed -i 's/-Werror//g' lib/lz4/Makefile
-        fi
-
         ./build.sh --no-lto marble
 
-        mkdir -p ${{ github.workspace }}/OUTPUT/mt76_ko
+    - name: Collect GKI2 Modules
+      run: |
+        mkdir -p ${{ github.workspace }}/NETHUNTER_RELEASE/NetKernel-modules_ADDONS
+        
+        cp kernel/msm-5.10/Image ${{ github.workspace }}/NETHUNTER_RELEASE/
+        
+        cp kernel/msm-5.10/out/.config ${{ github.workspace }}/NETHUNTER_RELEASE/config.txt
+        
+        find kernel/msm-5.10/out/modules/ -name "*mt76*.ko" -exec cp {} ${{ github.workspace }}/NETHUNTER_RELEASE/NetKernel-modules_ADDONS/ \;
 
-        find ${{ github.workspace }} -name "Image" -exec cp {} ${{ github.workspace }}/OUTPUT/ \;
-        find ${{ github.workspace }} -name ".config" -exec cp {} ${{ github.workspace }}/OUTPUT/config.txt \;
-        find ${{ github.workspace }} -name "*mt76*.ko" -exec cp {} ${{ github.workspace }}/OUTPUT/mt76_ko/ \;
-
-    - name: Upload Artifacts
+    - name: Upload NetHunter Artifacts
       if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: PocoF5-Kernel-MT7612U
-        path: ${{ github.workspace }}/OUTPUT/
+        name: NetHunter-Kernel-PocoF5-MT7612U
+        path: ${{ github.workspace }}/NETHUNTER_RELEASE/
