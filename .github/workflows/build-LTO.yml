@@ -44,13 +44,8 @@ jobs:
         sed -i '/select MAC80211_LEDS/d' drivers/net/wireless/ath/carl9170/Kconfig
         sed -i '/select MAC80211_LEDS/d' drivers/net/wireless/realtek/rtl818x/rtl8187/Kconfig
         sed -i '/select MT76_LEDS/d' drivers/net/wireless/mediatek/mt76/Kconfig
+        sed -i 's/depends on MT76_CORE/depends on BROKEN/g' drivers/net/wireless/mediatek/mt76/Kconfig
         sed -i '/select RT2X00_LIB_LEDS/d' drivers/net/wireless/ralink/rt2x00/Kconfig
-
-        sed -i '/config MAC80211_LEDS/a \	depends on BROKEN' net/mac80211/Kconfig
-        sed -i '/config MT76_LEDS/a \	depends on BROKEN' drivers/net/wireless/mediatek/mt76/Kconfig
-        sed -i '/config CARL9170_LEDS/a \	depends on BROKEN' drivers/net/wireless/ath/carl9170/Kconfig
-        sed -i '/config RTL8187_LEDS/a \	depends on BROKEN' drivers/net/wireless/realtek/rtl818x/rtl8187/Kconfig
-        sed -i '/config RT2X00_LIB_LEDS/a \	depends on BROKEN' drivers/net/wireless/ralink/rt2x00/Kconfig
 
         if [ -f author_config.txt ]; then
           cp author_config.txt out/.config
