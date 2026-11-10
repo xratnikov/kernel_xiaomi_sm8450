@@ -38,6 +38,7 @@ jobs:
       run: |
         cd kernel/msm-5.10
         mkdir -p out
+        echo "" >> Makefile
 
         if [ -f author_config.txt ]; then
           cp author_config.txt out/.config
@@ -54,6 +55,7 @@ jobs:
 
         scripts/config --file out/.config \
           -d CONFIG_WERROR \
+          -d CONFIG_RELAY \
           -e CONFIG_SECURITY_SELINUX \
           -e CONFIG_DEFAULT_SECURITY_SELINUX \
           -d CONFIG_DEFAULT_SECURITY_DAC \
