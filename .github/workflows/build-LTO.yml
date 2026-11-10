@@ -28,29 +28,58 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y bc bison build-essential curl flex git libssl-dev \
           libelf-dev python3 python-is-python3 libncurses-dev cpio lz4 \
-          device-tree-compiler zip kmod pahole rsync clang lld llvm \
-          binutils-aarch64-linux-gnu
+          device-tree-compiler zip kmod pahole rsync clang-18 lld-18 llvm-18 \
+          clang lld llvm binutils-aarch64-linux-gnu
 
-    - name: Link System Clang 18 to Toolchain Path
-      run: |
-        mkdir -p prebuilts-master/clang/host/linux-x86/clang-r416183b
-        mkdir -p prebuilts/kernel-build-tools/linux-x86
-
-        DOM1="https://android."
-        DOM2="googlesource.com"
-        curl -fL "${DOM1}${DOM2}/kernel/prebuilts/build-tools/+archive/refs/heads/master-kernel-build-2021/linux-x86.tar.gz" | tar -xz -C prebuilts/kernel-build-tools/linux-x86
-
-        ln -s /usr/bin prebuilts-master/clang/host/linux-x86/clang-r416183b/bin
-        ln -s /usr/lib prebuilts-master/clang/host/linux-x86/clang-r416183b/lib
-
-    - name: Run build.sh with LTO
+    - name: Prepare Exact Phone Config and Build
       env:
         KCFLAGS: "-w"
       run: |
         cd kernel/msm-5.10
-        sed -i '/merge_dtbs.py/,$d' build.sh
-        chmod +x build.sh
-        ./build.sh marble
+        mkdir -p out
+
+        if [ -f author_config.txt ]; then
+          cp author_config.txt out/.config
+        elif [ -f author_config ]; then
+          cp author_config out/.config
+        else
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 gki_defconfig
+          scripts/kconfig/merge_config.sh -m -O out out/.config \
+            arch/arm64/configs/vendor/waipio_GKI.config \
+            arch/arm64/configs/vendor/xiaomi_GKI.config \
+            arch/arm64/configs/vendor/addon.config \
+            arch/arm64/configs/vendor/marble_GKI.config
+        fi
+
+        scripts/config --file out/.config \
+          -e CONFIG_SECURITY_SELINUX \
+          -e CONFIG_DEFAULT_SECURITY_SELINUX \
+          -d CONFIG_DEFAULT_SECURITY_DAC \
+          -e CONFIG_AUDIT \
+          -e CONFIG_AUDITSYSCALL \
+          -e CONFIG_NETWORK_SECMARK \
+          -e CONFIG_NF_CONNTRACK_SECMARK \
+          -e CONFIG_NETFILTER_XT_TARGET_CONNSECMARK \
+          -e CONFIG_NETFILTER_XT_TARGET_SECMARK \
+          -e CONFIG_CFI_CLANG \
+          -e CONFIG_CFI_CLANG_SHADOW \
+          -m CONFIG_MT76_CORE \
+          -e CONFIG_MT76_LEDS \
+          -m CONFIG_MT76_USB \
+          -m CONFIG_MT76x02_LIB \
+          -m CONFIG_MT76x02_USB \
+          -m CONFIG_MT76x2_COMMON \
+          -m CONFIG_MT76x2U
+
+        make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
+          CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+
+        make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
+          CROSS_COMPILE=aarch64-linux-gnu- Image modules
+
+        rm -rf out/modules
+        make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
+          CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=modules INSTALL_MOD_STRIP=1 modules_install
 
     - name: Collect GKI2 Deliverables
       run: |
