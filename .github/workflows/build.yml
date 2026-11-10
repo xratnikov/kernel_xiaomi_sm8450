@@ -14,24 +14,27 @@ jobs:
         fetch-depth: 1
         path: kernel/msm-5.10
 
-    - name: Install Build Packages
+    - name: Install Packages
       run: |
         sudo apt-get update
         sudo apt-get install -y bc bison build-essential curl flex git libssl-dev \
           libelf-dev python3 python-is-python3 libncurses-dev cpio lz4 \
           device-tree-compiler zip kmod pahole rsync
 
-    - name: Download Toolchain and Tools
+    - name: Download Toolchain
       env:
-        DOM: "https://android.googlesource.com"
+        URL_BASE: "https://googlesource.com"
+        CLANG_TAR: "platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master-kernel-build-2021/clang-r416183b.tar.gz"
+        TOOLS_TAR: "kernel/prebuilts/build-tools/+archive/refs/heads/master-kernel-build-2021/linux-x86.tar.gz"
       run: |
-        mkdir -p prebuilts-master/clang/host/linux-x86
-        mkdir -p prebuilts/kernel-build-tools
+        mkdir -p prebuilts-master/clang/host/linux-x86/clang-r416183b
+        mkdir -p prebuilts/kernel-build-tools/linux-x86
         
-        git clone --depth=1 -b master-kernel-build-2021 "${{ env.DOM }}/platform/prebuilts/clang/host/linux-x86" prebuilts-master/clang/host/linux-x86/clang-r416183b
-        git clone --depth=1 -b master-kernel-build-2021 "${{ env.DOM }}/kernel/prebuilts/build-tools" prebuilts/kernel-build-tools/linux-x86
-        
-    - name: Compile NetHunter Kernel
+        # Скачиваем архивы напрямую без разрывов строк и склеек
+        curl -fL "${{ env.URL_BASE }}/${{ env.CLANG_TAR }}" | tar -xz -C prebuilts-master/clang/host/linux-x86/clang-r416183b
+        curl -fL "${{ env.URL_BASE }}/${{ env.TOOLS_TAR }}" | tar -xz -C prebuilts/kernel-build-tools/linux-x86
+
+    - name: Run build.sh
       env:
         KCFLAGS: "-w"
       run: |
@@ -42,11 +45,8 @@ jobs:
     - name: Collect GKI2 Modules
       run: |
         mkdir -p ${{ github.workspace }}/NETHUNTER_RELEASE/NetKernel-modules_ADDONS
-        
         cp kernel/msm-5.10/Image ${{ github.workspace }}/NETHUNTER_RELEASE/
-        
         cp kernel/msm-5.10/out/.config ${{ github.workspace }}/NETHUNTER_RELEASE/config.txt
-        
         find kernel/msm-5.10/out/modules/ -name "*mt76*.ko" -exec cp {} ${{ github.workspace }}/NETHUNTER_RELEASE/NetKernel-modules_ADDONS/ \;
 
     - name: Upload NetHunter Artifacts
