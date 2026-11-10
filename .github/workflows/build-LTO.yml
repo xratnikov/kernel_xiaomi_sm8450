@@ -56,15 +56,20 @@ jobs:
         scripts/config --file out/.config \
           -d CONFIG_WERROR \
           -d CONFIG_RELAY \
+          -d CONFIG_WIRELESS_WDS \
           -e CONFIG_SECURITY_SELINUX \
+          -e CONFIG_SECURITY_SELINUX_DEVELOP \
+          -e CONFIG_SECURITY_SELINUX_AVC_STATS \
           -e CONFIG_DEFAULT_SECURITY_SELINUX \
           -d CONFIG_DEFAULT_SECURITY_DAC \
           -e CONFIG_AUDIT \
           -e CONFIG_AUDITSYSCALL \
+          -e CONFIG_INTEGRITY_AUDIT \
           -e CONFIG_NETWORK_SECMARK \
           -e CONFIG_NF_CONNTRACK_SECMARK \
           -e CONFIG_NETFILTER_XT_TARGET_CONNSECMARK \
           -e CONFIG_NETFILTER_XT_TARGET_SECMARK \
+          --set-str CONFIG_LSM "lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf" \
           -e CONFIG_CFI_CLANG \
           -e CONFIG_CFI_CLANG_SHADOW \
           -m CONFIG_MT76_CORE \
