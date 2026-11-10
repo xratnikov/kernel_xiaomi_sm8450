@@ -23,16 +23,14 @@ jobs:
 
     - name: Download Toolchain and Tools
       env:
-        DOM: "https://googlesource.com"
-        CLANG_PATH: "platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master-kernel-build-2021/clang-r416183b.tar.gz"
-        TOOLS_PATH: "kernel/prebuilts/build-tools/+archive/refs/heads/master-kernel-build-2021/linux-x86.tar.gz"
+        DOM: "https://android.googlesource.com"
       run: |
-        mkdir -p prebuilts-master/clang/host/linux-x86/clang-r416183b
-        mkdir -p prebuilts/kernel-build-tools/linux-x86
+        mkdir -p prebuilts-master/clang/host/linux-x86
+        mkdir -p prebuilts/kernel-build-tools
         
-        curl -fL "${{ env.DOM }}/${{ env.CLANG_PATH }}" | tar -xz -C prebuilts-master/clang/host/linux-x86/clang-r416183b
-        curl -fL "${{ env.DOM }}/${{ env.TOOLS_PATH }}" | tar -xz -C prebuilts/kernel-build-tools/linux-x86
-
+        git clone --depth=1 -b master-kernel-build-2021 "${{ env.DOM }}/platform/prebuilts/clang/host/linux-x86" prebuilts-master/clang/host/linux-x86/clang-r416183b
+        git clone --depth=1 -b master-kernel-build-2021 "${{ env.DOM }}/kernel/prebuilts/build-tools" prebuilts/kernel-build-tools/linux-x86
+        
     - name: Compile NetHunter Kernel
       env:
         KCFLAGS: "-w"
