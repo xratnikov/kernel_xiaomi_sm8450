@@ -40,6 +40,7 @@ jobs:
         mkdir -p out
         echo "" >> Makefile
         sed -i '/select MT76_LEDS/d' drivers/net/wireless/mediatek/mt76/Kconfig
+        sed -i 's/default y/default n/g' drivers/net/wireless/mediatek/mt76/Kconfig
         sed -i '/select MAC80211_LEDS/d' nethunter/Kconfig
 
         if [ -f author_config.txt ]; then
