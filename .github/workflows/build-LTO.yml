@@ -34,6 +34,7 @@ jobs:
     - name: Prepare Exact Phone Config and Build
       env:
         KCFLAGS: "-w"
+        HOSTCFLAGS: "-w"
       run: |
         cd kernel/msm-5.10
         mkdir -p out
@@ -52,6 +53,7 @@ jobs:
         fi
 
         scripts/config --file out/.config \
+          -d CONFIG_WERROR \
           -e CONFIG_SECURITY_SELINUX \
           -e CONFIG_DEFAULT_SECURITY_SELINUX \
           -d CONFIG_DEFAULT_SECURITY_DAC \
