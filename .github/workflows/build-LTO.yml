@@ -41,10 +41,8 @@ jobs:
         echo "" >> Makefile
 
         sed -i '/select MT76_LEDS/d' drivers/net/wireless/mediatek/mt76/Kconfig
-        sed -i '/config MT76_LEDS/,/default y/s/default y/default n/' drivers/net/wireless/mediatek/mt76/Kconfig
-        sed -i '/config CARL9170_LEDS/,/default y/s/default y/default n/' drivers/net/wireless/ath/carl9170/Kconfig
-        sed -i '/config RT2X00_LIB_LEDS/,/default y/s/default y/default n/' drivers/net/wireless/ralink/rt2x00/Kconfig
-        sed -i '/config RTL8187_LEDS/,/default y/s/default y/default n/' drivers/net/wireless/realtek/rtl818x/rtl8187/Kconfig
+        sed -i '/config MT76_LEDS/a \	depends on BROKEN' drivers/net/wireless/mediatek/mt76/Kconfig
+        sed -i '/select RT2X00_LIB_LEDS/d' drivers/net/wireless/ralink/rt2x00/Kconfig
         sed -i '/select MAC80211_LEDS/d' nethunter/Kconfig
 
         if [ -f author_config.txt ]; then
@@ -97,7 +95,7 @@ jobs:
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
-        grep -E "MT76|MAC80211_LEDS|CARL9170|RT2800USB_RT33XX|RT2X00_LIB_LEDS|RTL8187_LEDS" out/.config
+        grep -E "MT76|MAC80211_LEDS|CARL9170|RT2X00_LIB_LEDS|RTL8187_LEDS" out/.config
 
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- Image modules
