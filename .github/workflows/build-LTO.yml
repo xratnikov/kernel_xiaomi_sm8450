@@ -39,6 +39,8 @@ jobs:
         cd kernel/msm-5.10
         mkdir -p out
         echo "" >> Makefile
+        sed -i '/select MT76_LEDS/d' drivers/net/wireless/mediatek/mt76/Kconfig
+        sed -i '/select MAC80211_LEDS/d' nethunter/Kconfig
 
         if [ -f author_config.txt ]; then
           cp author_config.txt out/.config
@@ -70,10 +72,11 @@ jobs:
         CONFIG_LSM="lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf"
         CONFIG_CFI_CLANG=y
         CONFIG_CFI_CLANG_SHADOW=y
+        CONFIG_MAC80211_LEDS=n
         CONFIG_WLAN_VENDOR_MEDIATEK=y
         CONFIG_MT7601U=m
         CONFIG_MT76_CORE=m
-        CONFIG_MT76_LEDS=y
+        CONFIG_MT76_LEDS=n
         CONFIG_MT76_USB=m
         CONFIG_MT76x02_LIB=m
         CONFIG_MT76x02_USB=m
@@ -86,8 +89,7 @@ jobs:
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
-        echo "=== ПРОВЕРКА ПЕРЕД СБОРКОЙ: ВКЛЮЧИЛСЯ ЛИ MT76x2U ==="
-        grep "MT76" out/.config
+        grep -E "MT76|MAC80211_LEDS" out/.config
 
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- Image modules
@@ -109,5 +111,5 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: NetHunter-Kernel-PocoF5-MT7612U-Clang18
+        name: NetHunter-Kernel-PocoF5-MT7612U-Clean
         path: ${{ github.workspace }}/NETHUNTER_RELEASE/
