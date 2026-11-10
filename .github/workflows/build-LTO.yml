@@ -40,12 +40,10 @@ jobs:
         mkdir -p out
         echo "" >> Makefile
 
-        sed -i '/select MAC80211_LEDS/d' nethunter/Kconfig
-        sed -i '/select MAC80211_LEDS/d' drivers/net/wireless/ath/carl9170/Kconfig
-        sed -i '/select MAC80211_LEDS/d' drivers/net/wireless/realtek/rtl818x/rtl8187/Kconfig
-        sed -i '/select MT76_LEDS/d' drivers/net/wireless/mediatek/mt76/Kconfig
+        find . -name "Kconfig*" -exec sed -i '/select MAC80211_LEDS/d' {} +
+        find . -name "Kconfig*" -exec sed -i '/select MT76_LEDS/d' {} +
+        find . -name "Kconfig*" -exec sed -i '/select RT2X00_LIB_LEDS/d' {} +
         sed -i 's/default y/default n/g' drivers/net/wireless/mediatek/mt76/Kconfig
-        sed -i '/select RT2X00_LIB_LEDS/d' drivers/net/wireless/ralink/rt2x00/Kconfig
 
         if [ -f author_config.txt ]; then
           cp author_config.txt out/.config
