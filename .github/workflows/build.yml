@@ -35,7 +35,7 @@ jobs:
       run: |
         cd kernel/msm-5.10
         chmod +x build.sh
-        ./build.sh marble || true
+        ./build.sh --no-lto marble
 
         mkdir -p OUTPUT/mt76_ko
         cp out/arch/arm64/boot/Image OUTPUT/
@@ -43,7 +43,7 @@ jobs:
         find out/modules -name "*mt76*.ko" -exec cp {} OUTPUT/mt76_ko/ \;
 
     - name: Upload Artifacts
-      if: always()
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: PocoF5-Kernel-MT7612U
