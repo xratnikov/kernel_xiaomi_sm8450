@@ -92,7 +92,7 @@ jobs:
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
-        grep -E "MT76|MAC80211_LEDS|CARL9170|RT2800USB_RT33XX|RT2X00_LIB_LEDS|RTL8187_LEDS" out/.config
+        grep -E "MT76|CARL9170|ATH9K|RT2800|RT2X00|RTL8187|RTL8192|ZD1211|MAC80211|LEDS" out/.config
 
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- Image modules
