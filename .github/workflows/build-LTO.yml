@@ -1,0 +1,66 @@
+name: Build NetHunter Kernel (POCO F5)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Maximize Swap Space for LTO
+      run: |
+        sudo swapoff -a
+        sudo fallocate -l 16G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        free -h
+
+    - name: Checkout Source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+        path: kernel/msm-5.10
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc bison build-essential curl flex git libssl-dev \
+          libelf-dev python3 python-is-python3 libncurses-dev cpio lz4 \
+          device-tree-compiler zip kmod pahole rsync
+
+    - name: Download Toolchain
+      run: |
+        mkdir -p prebuilts-master/clang/host/linux-x86/clang-r416183b
+        mkdir -p prebuilts/kernel-build-tools/linux-x86
+
+        DOM1="https://android."
+        DOM2="googlesource.com"
+        curl -fL "${DOM1}${DOM2}/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master-kernel-build-2021/clang-r416183b.tar.gz" | tar -xz -C prebuilts-master/clang/host/linux-x86/clang-r416183b
+        curl -fL "${DOM1}${DOM2}/kernel/prebuilts/build-tools/+archive/refs/heads/master-kernel-build-2021/linux-x86.tar.gz" | tar -xz -C prebuilts/kernel-build-tools/linux-x86
+
+    - name: Run build.sh with LTO
+      env:
+        KCFLAGS: "-w"
+      run: |
+        cd kernel/msm-5.10
+        sed -i '/merge_dtbs.py/,$d' build.sh
+        chmod +x build.sh
+        ./build.sh marble
+
+    - name: Collect GKI2 Deliverables
+      run: |
+        mkdir -p ${{ github.workspace }}/NETHUNTER_RELEASE/system
+        cp kernel/msm-5.10/out/arch/arm64/boot/Image ${{ github.workspace }}/NETHUNTER_RELEASE/
+        cp kernel/msm-5.10/out/.config ${{ github.workspace }}/NETHUNTER_RELEASE/config.txt
+        rm -rf kernel/msm-5.10/out/modules/lib/modules/*/build
+        rm -rf kernel/msm-5.10/out/modules/lib/modules/*/source
+        cp -r kernel/msm-5.10/out/modules/lib ${{ github.workspace }}/NETHUNTER_RELEASE/system/
+
+    - name: Upload NetHunter Artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: NetHunter-Kernel-PocoF5-MT7612U-LTO
+        path: ${{ github.workspace }}/NETHUNTER_RELEASE/
