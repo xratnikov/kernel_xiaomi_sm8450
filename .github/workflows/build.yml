@@ -35,18 +35,23 @@ jobs:
       run: |
         cd kernel/msm-5.10
         chmod +x build.sh
+        
+        find arch/arm64/configs/ -type f -exec sed -i 's/CONFIG_FRAME_WARN=[0-9]*/CONFIG_FRAME_WARN=0/g' {} +
+        if [ -f lib/lz4/Makefile ]; then
+          sed -i 's/-Werror//g' lib/lz4/Makefile
+        fi
+
         ./build.sh --no-lto marble
 
-        mkdir -p OUTPUT/mt76_ko
-        cp out/arch/arm64/boot/Image OUTPUT/
-        cp out/.config OUTPUT/config.txt
-        find out/modules -name "*mt76*.ko" -exec cp {} OUTPUT/mt76_ko/ \;
+        mkdir -p ${{ github.workspace }}/OUTPUT/mt76_ko
+
+        find ${{ github.workspace }} -name "Image" -exec cp {} ${{ github.workspace }}/OUTPUT/ \;
+        find ${{ github.workspace }} -name ".config" -exec cp {} ${{ github.workspace }}/OUTPUT/config.txt \;
+        find ${{ github.workspace }} -name "*mt76*.ko" -exec cp {} ${{ github.workspace }}/OUTPUT/mt76_ko/ \;
 
     - name: Upload Artifacts
       if: success()
       uses: actions/upload-artifact@v4
       with:
         name: PocoF5-Kernel-MT7612U
-        path: |
-          kernel/msm-5.10/OUTPUT/
-          kernel/msm-5.10/log.txt
+        path: ${{ github.workspace }}/OUTPUT/
