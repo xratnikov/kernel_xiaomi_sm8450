@@ -42,6 +42,8 @@ jobs:
 
         sed -i '/select MT76_LEDS/d' drivers/net/wireless/mediatek/mt76/Kconfig
         sed -i '/config MT76_LEDS/a \	depends on BROKEN' drivers/net/wireless/mediatek/mt76/Kconfig
+        sed -i '/select MAC80211_LEDS/d' drivers/net/wireless/ath/carl9170/Kconfig
+        sed -i '/select MAC80211_LEDS/d' drivers/net/wireless/realtek/rtl818x/rtl8187/Kconfig
         sed -i '/select RT2X00_LIB_LEDS/d' drivers/net/wireless/ralink/rt2x00/Kconfig
         sed -i '/select MAC80211_LEDS/d' nethunter/Kconfig
 
@@ -58,44 +60,43 @@ jobs:
             arch/arm64/configs/vendor/marble_GKI.config
         fi
 
-        cat << 'EOF' > out/mt76_override.config
-        CONFIG_WERROR=n
-        CONFIG_SECURITY_SELINUX=y
-        CONFIG_SECURITY_SELINUX_DEVELOP=y
-        CONFIG_SECURITY_SELINUX_AVC_STATS=y
-        CONFIG_DEFAULT_SECURITY_SELINUX=y
-        CONFIG_DEFAULT_SECURITY_DAC=n
-        CONFIG_AUDIT=y
-        CONFIG_AUDITSYSCALL=y
-        CONFIG_INTEGRITY_AUDIT=y
-        CONFIG_NETWORK_SECMARK=y
-        CONFIG_NF_CONNTRACK_SECMARK=y
-        CONFIG_NETFILTER_XT_TARGET_CONNSECMARK=y
-        CONFIG_NETFILTER_XT_TARGET_SECMARK=y
-        CONFIG_LSM="lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf"
-        CONFIG_CFI_CLANG=y
-        CONFIG_CFI_CLANG_SHADOW=y
-        CONFIG_MAC80211_LEDS=n
-        CONFIG_CARL9170_LEDS=n
-        CONFIG_RT2X00_LIB_LEDS=n
-        CONFIG_RTL8187_LEDS=n
-        CONFIG_WLAN_VENDOR_MEDIATEK=y
-        CONFIG_MT7601U=m
-        CONFIG_MT76_CORE=m
-        CONFIG_MT76_LEDS=n
-        CONFIG_MT76_USB=m
-        CONFIG_MT76x02_LIB=m
-        CONFIG_MT76x02_USB=m
-        CONFIG_MT76x2_COMMON=m
-        CONFIG_MT76x2U=m
-        EOF
+        printf "%s\n" \
+          "CONFIG_WERROR=n" \
+          "CONFIG_SECURITY_SELINUX=y" \
+          "CONFIG_SECURITY_SELINUX_DEVELOP=y" \
+          "CONFIG_SECURITY_SELINUX_AVC_STATS=y" \
+          "CONFIG_DEFAULT_SECURITY_SELINUX=y" \
+          "CONFIG_DEFAULT_SECURITY_DAC=n" \
+          "CONFIG_AUDIT=y" \
+          "CONFIG_AUDITSYSCALL=y" \
+          "CONFIG_INTEGRITY_AUDIT=y" \
+          "CONFIG_NETWORK_SECMARK=y" \
+          "CONFIG_NF_CONNTRACK_SECMARK=y" \
+          "CONFIG_NETFILTER_XT_TARGET_CONNSECMARK=y" \
+          "CONFIG_NETFILTER_XT_TARGET_SECMARK=y" \
+          "CONFIG_LSM=\"lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf\"" \
+          "CONFIG_CFI_CLANG=y" \
+          "CONFIG_CFI_CLANG_SHADOW=y" \
+          "CONFIG_MAC80211_LEDS=n" \
+          "CONFIG_CARL9170_LEDS=n" \
+          "CONFIG_RT2X00_LIB_LEDS=n" \
+          "CONFIG_RTL8187_LEDS=n" \
+          "CONFIG_WLAN_VENDOR_MEDIATEK=y" \
+          "CONFIG_MT7601U=m" \
+          "CONFIG_MT76_CORE=m" \
+          "CONFIG_MT76_LEDS=n" \
+          "CONFIG_MT76_USB=m" \
+          "CONFIG_MT76x02_LIB=m" \
+          "CONFIG_MT76x02_USB=m" \
+          "CONFIG_MT76x2_COMMON=m" \
+          "CONFIG_MT76x2U=m" > out/mt76_override.config
 
         scripts/kconfig/merge_config.sh -m -O out out/.config out/mt76_override.config
 
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
-        grep -E "MT76|MAC80211_LEDS|CARL9170|RT2X00_LIB_LEDS|RTL8187_LEDS" out/.config
+        grep -E "MT76|MAC80211_LEDS|CARL9170|RT2800USB_RT33XX|RT2X00_LIB_LEDS|RTL8187_LEDS" out/.config
 
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld LLVM=1 LLVM_IAS=1 \
           CROSS_COMPILE=aarch64-linux-gnu- Image modules
