@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - name: Maximize Swap Space for LTO
@@ -23,22 +23,25 @@ jobs:
         fetch-depth: 1
         path: kernel/msm-5.10
 
-    - name: Install Packages
+    - name: Install Ubuntu 24.04 Clang 18.1.3 and Tools
       run: |
         sudo apt-get update
         sudo apt-get install -y bc bison build-essential curl flex git libssl-dev \
           libelf-dev python3 python-is-python3 libncurses-dev cpio lz4 \
-          device-tree-compiler zip kmod pahole rsync
+          device-tree-compiler zip kmod pahole rsync clang lld llvm \
+          binutils-aarch64-linux-gnu
 
-    - name: Download Toolchain
+    - name: Link System Clang 18 to Toolchain Path
       run: |
         mkdir -p prebuilts-master/clang/host/linux-x86/clang-r416183b
         mkdir -p prebuilts/kernel-build-tools/linux-x86
 
         DOM1="https://android."
         DOM2="googlesource.com"
-        curl -fL "${DOM1}${DOM2}/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master-kernel-build-2021/clang-r416183b.tar.gz" | tar -xz -C prebuilts-master/clang/host/linux-x86/clang-r416183b
         curl -fL "${DOM1}${DOM2}/kernel/prebuilts/build-tools/+archive/refs/heads/master-kernel-build-2021/linux-x86.tar.gz" | tar -xz -C prebuilts/kernel-build-tools/linux-x86
+
+        ln -s /usr/bin prebuilts-master/clang/host/linux-x86/clang-r416183b/bin
+        ln -s /usr/lib prebuilts-master/clang/host/linux-x86/clang-r416183b/lib
 
     - name: Run build.sh with LTO
       env:
@@ -62,5 +65,5 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: NetHunter-Kernel-PocoF5-MT7612U-LTO
+        name: NetHunter-Kernel-PocoF5-MT7612U-Clang18
         path: ${{ github.workspace }}/NETHUNTER_RELEASE/
